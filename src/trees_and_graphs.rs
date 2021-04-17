@@ -17,6 +17,13 @@ impl<T> Node<T> {
             children
         }
     }
+
+    pub fn leaf_node(data: T) -> Node<T> {
+        Node {
+            data,
+            children: vec![]
+        }
+    }
 }
 
 impl<T> Tree<T> {
@@ -27,9 +34,19 @@ impl<T> Tree<T> {
     }
 }
 
+fn traverse_node_in_order<T: std::cmp::PartialEq + std::fmt::Display>(node: &Node<T>){
+
+    for i in 0..node.children.len() {
+        traverse_node_in_order(&node.children[i]);
+        println!("{}", &node.children[i].data);
+    }
+    println!("{}", node.data);
+    // node.data == search_term
+}
+    
 #[cfg(test)]
 mod tests {
-    use crate::trees_and_graphs::{Node, Tree};
+    use crate::trees_and_graphs::{Node, Tree, traverse_node_in_order};
 
     #[test]
     fn test_tree_construction() {
@@ -50,6 +67,11 @@ mod tests {
         assert_eq!(0, tree.root.children[1].data);
 
         assert_eq!("inner str", str_tree.root.children[0].data);
-        assert_eq!("str", str_tree.root.data)
+        assert_eq!("str", str_tree.root.data);
+
+        let nodes = Node::new(1, vec![Node::leaf_node(2), Node::leaf_node(4)]);
+        traverse_node_in_order(&nodes);
+        // assert_eq!(true, traverse_node_in_order(&nodes, 1));
+        // assert_eq!(true, traverse_node_in_order(&nodes, 2));
     }
 }
