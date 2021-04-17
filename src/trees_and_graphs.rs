@@ -1,12 +1,12 @@
 
 
-struct Node {
-    pub data: u32,
-    pub children: Vec<Node>
+struct Node<T> {
+    pub data: T,
+    pub children: Vec<Node<T>>
 }
 
-struct Tree {
-    pub root: Node
+struct Tree<T> {
+    pub root: Node<T>
 }
 
 
@@ -23,7 +23,17 @@ mod tests {
             }
         };
 
+        let str_tree = Tree {
+            root: Node {
+                data: "str",
+                children: vec![Node{data: "inner str", children: vec![]}]
+            }
+        };
+
         assert_eq!(2, tree.root.children[0].data);
         assert_eq!(0, tree.root.children[1].data);
+
+        assert_eq!("inner str", str_tree.root.children[0].data);
+        assert_eq!("str", str_tree.root.data)
     }
 }
