@@ -1,5 +1,6 @@
 mod linked_lists;
 mod trees_and_graphs;
+mod graphs;
 
 use itertools::Itertools;
 use std::collections::HashMap;
