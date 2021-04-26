@@ -1,7 +1,13 @@
+use petgraph::graph::{NodeIndex, Graph};
+use petgraph::Direction;
 
 
-// Create an undirected graph with `i32` nodes and edges with `()` associated data.
-
+fn search_path(graph: Graph<&str, u32>, from: NodeIndex, to: NodeIndex) {
+    for neighbor in graph.neighbors_directed(from, Direction::Outgoing)
+        .into_iter() {
+        println!("{}", graph[neighbor]);
+    }
+}
 #[cfg(test)]
 mod tests {
     use petgraph::graph::{NodeIndex, Graph};
@@ -9,11 +15,12 @@ mod tests {
     use queues::*;
     use petgraph::Direction;
     use petgraph::visit::Visitable;
+    use crate::graphs::search_path;
 
     #[test]
     fn graph() {
         let mut q: Queue<isize> = queue![];
-        let mut g = Graph::new();
+        let mut g: Graph<&str, u32> = Graph::new();
         let givat_zeev = g.add_node("givat_zeev");
         let jerusalem = g.add_node("jerusalem");
         let tel_aviv = g.add_node("tel_aviv");
@@ -23,9 +30,6 @@ mod tests {
         g.add_edge(jerusalem, tel_aviv, 0);
         g.add_edge(tel_aviv, givat_shmuel, 0);
 
-
-        for neighbor in g.neighbors_directed(givat_zeev, Direction::Outgoing).into_iter() {
-            println!("{:?}", g[neighbor]);
-        }
+        search_path(g, givat_zeev, givat_shmuel);
     }
 }
