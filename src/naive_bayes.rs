@@ -99,12 +99,16 @@ mod tests {
         let mut naive_bayes = NaiveBayes::new();
         naive_bayes.train(texts, vec![0, 0, 0, 0, 1, 1, 1]);
         let benign_text = "dear friend";
+        let benign_text2 = "come to lunch dear friend";
         let malicious_text = "give me your money";
         let pred_benign = naive_bayes.predict(benign_text);
+        let pred_benign2 = naive_bayes.predict(benign_text2);
         let pred_malicious = naive_bayes.predict(malicious_text);
         println!("prediction for '{}':, {}", benign_text, pred_benign);
+        println!("prediction for '{}':, {}", benign_text2, pred_benign2);
         println!("prediction for '{}':, {}", malicious_text, pred_malicious);
         assert_eq!(0, pred_benign);
+        assert_eq!(0, pred_benign2);
         assert_eq!(1, pred_malicious);
     }
 }
