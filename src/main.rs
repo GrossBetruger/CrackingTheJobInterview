@@ -1,6 +1,7 @@
 mod linked_lists;
 mod trees_and_graphs;
 mod graphs;
+mod naive_bayes;
 
 use itertools::Itertools;
 use std::collections::HashMap;
