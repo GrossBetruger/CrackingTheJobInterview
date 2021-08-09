@@ -2,24 +2,40 @@ use counter::Counter;
 use itertools::zip;
 use std::collections::HashMap;
 
+const ALPHA: f64 = 1.; // count added to missing words to avoid probability 0.0
+
 struct NaiveBayes {
     model: Option<NaiveBayesParameters>,
 }
 
 struct NaiveBayesParameters {
     priors: HashMap<u16, f64>,
-    probabilities: HashMap<u16, HashMap<String, f64>>,
+    probabilities: HashMap<u16, Probabilities>,
+}
+
+struct Probabilities {
+    word_probabilities: HashMap<String, f64>,
+    default_probability: f64,
+}
+
+impl Probabilities {
+    pub fn empty() -> Probabilities {
+        Probabilities {
+            word_probabilities: Default::default(),
+            default_probability: 0.0,
+        }
+    }
 }
 
 impl NaiveBayes {
     pub fn train(&mut self, x: Vec<&str>, y: Vec<u16>) {
         let mut words: HashMap<u16, Vec<String>> = HashMap::new();
-        let mut probabilities: HashMap<u16, HashMap<String, f64>> = HashMap::new();
+        let mut probabilities: HashMap<u16, Probabilities> = HashMap::new();
         let priors: HashMap<u16, f64> = y
             .iter()
             .collect::<Counter<_>>()
             .iter()
-            .map(|(label, count)| (**label, *count as f64 / y.len() as f64))
+            .map(|(label, count)| (**label, (*count as f64) / y.len() as f64))
             .collect();
 
         for (text, label) in zip(x, y).into_iter() {
@@ -33,14 +49,15 @@ impl NaiveBayes {
 
         for (label, words) in words.iter() {
             let counter = words.iter().collect::<Counter<_>>();
-
             for (word, count) in counter.iter() {
-                let mut map = HashMap::new();
+                let frequency = (*count as f64 + ALPHA) / words.len() as f64;
                 probabilities
                     .entry(*label)
-                    .or_insert(map)
-                    .insert(String::from(*word), (*count as f64 / words.len() as f64));
+                    .or_insert(Probabilities::empty())
+                    .word_probabilities
+                    .insert(word.to_string(), frequency);
             }
+            probabilities.get_mut(label).unwrap().default_probability = ALPHA / words.len() as f64;
         }
 
         self.model = Option::from(NaiveBayesParameters {
@@ -54,15 +71,11 @@ impl NaiveBayes {
         let mut predictions: HashMap<u16, f64> = HashMap::new();
         for (label, prior) in &model.priors {
             let mut probability: f64 = 1.;
-            let mut default_probability: f64 = &model.probabilities[&label]
-                .values()
-                .into_iter()
-                .fold(0., |mut sum: f64, val| sum + *val)
-                / model.probabilities[&label].values().len() as f64;
             for word in text.split(" ") {
                 let mut mul = model.probabilities[&label]
+                    .word_probabilities
                     .get(word)
-                    .unwrap_or(&default_probability);
+                    .unwrap_or(&model.probabilities[&label].default_probability);
                 probability *= mul;
             }
             probability *= prior;
@@ -99,16 +112,20 @@ mod tests {
         let mut naive_bayes = NaiveBayes::new();
         naive_bayes.train(texts, vec![0, 0, 0, 0, 1, 1, 1]);
         let benign_text = "dear friend";
-        let benign_text2 = "come to lunch dear friend";
+        let benign_text2 = "dear lunch";
         let malicious_text = "give me your money";
+        let malicious_text2 = "money friend";
         let pred_benign = naive_bayes.predict(benign_text);
         let pred_benign2 = naive_bayes.predict(benign_text2);
         let pred_malicious = naive_bayes.predict(malicious_text);
+        let pred_malicious2 = naive_bayes.predict(malicious_text2);
         println!("prediction for '{}':, {}", benign_text, pred_benign);
         println!("prediction for '{}':, {}", benign_text2, pred_benign2);
         println!("prediction for '{}':, {}", malicious_text, pred_malicious);
+        println!("prediction for '{}':, {}", malicious_text2, pred_malicious2);
         assert_eq!(0, pred_benign);
         assert_eq!(0, pred_benign2);
         assert_eq!(1, pred_malicious);
+        assert_eq!(1, pred_malicious2);
     }
 }
